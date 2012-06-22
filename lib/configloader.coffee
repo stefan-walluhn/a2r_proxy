@@ -11,7 +11,9 @@ init = (config_file) ->
   
   # Set default values
 
-  config['notify_server_port'] = 7010 if not config['notify_server_port'] 
+  config['notify_server_port'] = 7010 if not config['notify_server_port']?
+  config['index_server_address'] = "localhost" if not config['index_server_address']?
+  config['index_server_port'] = 7001 if not config['index_server_port']?
 
   return config
 

@@ -1,4 +1,4 @@
-### A2R Node Notify Server ###
+### A2R Proxy Notify Server ###
 #
 # This server notifies A2R Index Server about new A2R Sessions
 #
@@ -20,8 +20,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-syslog = require('./lib/syslog') 'a2r_node_notify'
-config = require('./lib/configloader') 'node.config'
+syslog = require('./lib/syslog') 'a2r_proxy_notfy'
+config = require('./lib/configloader') 'proxy.config'
 
 server = require('net').createServer (socket) ->
   socket.write 'Echo server\r\n'
