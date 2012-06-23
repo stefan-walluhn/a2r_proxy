@@ -1,5 +1,5 @@
-init = (config_file) -> 
-  syslog = require('./syslog')()
+load = (config_file) -> 
+  syslog = require('./syslog').getInstance()
 
   config = []
   try 
@@ -17,5 +17,5 @@ init = (config_file) ->
 
   return config
 
-module.exports = init
+module.exports.load = load
 
