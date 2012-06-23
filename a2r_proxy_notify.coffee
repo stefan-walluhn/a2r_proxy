@@ -20,8 +20,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-syslog = require('./lib/syslog') 'a2r_proxy_notfy'
-config = require('./lib/configloader') 'proxy.config'
+syslog = require('./lib/syslog').getInstance()
+config = require('./lib/configloader').load('proxy.config')
 
 server = require('net').createServer (socket) ->
   socket.write 'Echo server\r\n'
