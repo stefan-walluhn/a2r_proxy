@@ -1,4 +1,4 @@
-a2r_index
+a2r_proxy
 =========
 
 The proxy server for Addicted2Random
