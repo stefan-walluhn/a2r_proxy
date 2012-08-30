@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /*
 ### A2R Proxy Server ###
 #
@@ -22,15 +24,20 @@
 # 
 */
 
-var syslog = require('./lib/syslog').getInstance() ;
+var argv = require('optimist').boolean('v').argv ;
+
+var syslog = require('./lib/syslog') ;
+if (argv.v) syslog.setConsoleLog(true) ;
+
 var config = require('./lib/configloader').load('proxy.config') ;
-var port = 7020 ;
+var osc = require('osc-min') ;
 
 var parseInput = function(data) {
   var sessionData = "" ;
 
   try {
-    sessionData = JSON.parse(data) ;
+    sessionData = osc.fromBuffer(data) ;
+    console.log(sessionData) ;
   } catch (err) {
     syslog.log(syslog.LOG_ERROR, "recieved malformated input from backend") ;
   }
@@ -45,30 +52,34 @@ var parseInput = function(data) {
 function startCollector(sensor) {
   sensor.target_port = port++ ;
   sensor.query_port = port++ ;
-  console.log("starting new collector for sensor: " + sensor.name + " with ports #" + sensor.target_port + " and #" + sensor.query_port) ;
+  syslog.log(syslog.LOG_INFO, "starting new collector for sensor: " + sensor.name + " with ports #" + sensor.target_port + " and #" + sensor.query_port) ;
 }
 
 function notifyIndex(data) {
   console.log(JSON.stringify(data)) ;
   var url = "http://" + config['index_server_address'] + ":" + config['index_server_port'] ;
-  console.log(url) ;
+  syslog.log(syslog.LOG_DEBUG, "sending notification to index server at: " + url) ;
   var request = require('request') ;
-  request.post({
+  /*request.post({
     url: url,
     headers: { 'Content-Type': 'application/json'},
     body: JSON.stringify(data)
   }, function(error, response, body) {
     syslog.log(syslog.LOG_ERROR, body) ;
-  }) ;
+  }) ;*/
 }
 
 var server = require('net').createServer(function(c) {
-  c.on('data', parseInput) ;
-  syslog.log(syslog.LOG_INFO, "backend " + c.remoteAddress + " connected to a2r_proxy") ;
+  syslog.log(syslog.LOG_INFO, "backend " + socket.remoteAddress + "connected tp a2r_proxy") ;
 
+  c.on('data', parseInput) ;
+  syslog.log(syslog.LOG_INFO, "backend " + c.remoteAddress + " transmitted announcment to a2r_proxy") ;
+
+  c.on('close', function(data) {
+    syslog.log(syslog.LOG_INFO, "backend " + c.remoteAddress + " closed connection") ;
+  }) ;
 }) ;
 
 server.listen(config['notify_server_port']) ;
 
-console.log('Server running') ;
 syslog.log(syslog.LOG_INFO, 'starting a2r_proxy server on port ' + config['notify_server_port']) ;
