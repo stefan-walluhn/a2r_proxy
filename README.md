@@ -26,7 +26,7 @@ Installation
 
 ### Install dependencies
 
-> npm install optimist node-syslog cjson osc-min
+> npm install optimist node-syslog cjson osc-min request
 
 ### Start server
 
