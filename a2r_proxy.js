@@ -24,6 +24,8 @@
 # 
 */
 
+var osc_address = "/a2r/announce/" ;
+
 var argv = require('optimist').boolean('v').argv ;
 
 var syslog = require('./lib/syslog') ;
@@ -34,19 +36,59 @@ var osc = require('osc-min') ;
 
 var parseInput = function(data) {
   var sessionData = "" ;
+  var outputData = {} ;
+  outputData['sensors'] = [] ;
 
   try {
     sessionData = osc.fromBuffer(data) ;
     console.log(sessionData) ;
+    if (sessionData.elements === undefined) throw "not a bundle" ;
   } catch (err) {
     syslog.log(syslog.LOG_ERROR, "recieved malformated input from backend") ;
+    return ;
   }
 
-  for (i=0; i<sessionData.sensors.length; i++) {
-    startCollector(sessionData.sensors[i]) ;
-  } ;
+  // cycle thrue all osc messages
+  for (i=0; i<sessionData.elements.length; i++) {
+    var element = sessionData.elements[i] ;
 
- notifyIndex(sessionData) ;
+    if (element.oscType == 'message') {
+      // This is a massage and therefore should be metadata
+
+      // This is no osc for us
+      if (element.address.search(osc_address) == -1) continue ;
+
+      if (element.args.length > 0) {
+        var key = element.address.substring(element.address.lastIndexOf("/")+1, element.address.length).toLowerCase() ;
+        var val = element.args[0].value ;
+        console.log("Metadata:\t" + key + " : " + val) ;
+        outputData[key] = val ;
+      }
+    } else {
+      // this is a bundle and therefor should be a sensor
+      var sensor = {} ;
+      for (j=0; j<sessionData.elements[i].elements.length; j++) {
+      element = sessionData.elements[i].elements[j] ;
+
+        // This is no osc for us
+        if (element.address.search(osc_address) == -1) continue ;
+
+        if (element.args.length > 0) {
+          var key = element.address.substring(element.address.lastIndexOf("/")+1, element.address.length).toLowerCase() ;
+          var val = element.args[0].value ;
+
+          sensor[key] = val ;
+          console.log("Sensordata:\t" + key + " : " + val) ;
+        }
+      }
+      if (sensor['name'] !== undefined) {
+        outputData['sensors'].push(sensor) ;
+      }
+    }
+  }
+
+  if (outputData['title'] === undefined) outputData['title'] = outputData['name'] ;
+  notifyIndex(outputData) ;
 }
 
 function startCollector(sensor) {
@@ -60,17 +102,17 @@ function notifyIndex(data) {
   var url = "http://" + config['index_server_address'] + ":" + config['index_server_port'] ;
   syslog.log(syslog.LOG_DEBUG, "sending notification to index server at: " + url) ;
   var request = require('request') ;
-  /*request.post({
+  request.post({
     url: url,
     headers: { 'Content-Type': 'application/json'},
     body: JSON.stringify(data)
   }, function(error, response, body) {
     syslog.log(syslog.LOG_ERROR, body) ;
-  }) ;*/
+  }) ;
 }
 
 var server = require('net').createServer(function(c) {
-  syslog.log(syslog.LOG_INFO, "backend " + socket.remoteAddress + "connected tp a2r_proxy") ;
+  syslog.log(syslog.LOG_INFO, "backend " + c.remoteAddress + "connected tp a2r_proxy") ;
 
   c.on('data', parseInput) ;
   syslog.log(syslog.LOG_INFO, "backend " + c.remoteAddress + " transmitted announcment to a2r_proxy") ;
