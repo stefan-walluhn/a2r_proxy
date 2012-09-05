@@ -7,17 +7,19 @@ var udp_res = dgram.createSocket('udp4') ;
 
 var proxy = {} ;
 var session = {} ;
-session['name'] = argv.oscname ;
-session['port'] = argv.oscport ;
+
+session['oscAddress'] = argv.oscaddress ;
+session['port'] = argv.backendport ;
+session['host'] = argv.backendhost ;
 
 udp_res.on("message", function(msg, rinfo) {
 
   var buf = osc.toBuffer({
-    address: argv.oscname ,
+    address: session.oscAddress ,
     args: [{type: "integer", value: msg.readInt16LE(1)}]
   }) ;
 
-  udp_send.send(buf, 0, buf.length, argv.oscport, argv.oschost) ;
+  udp_send.send(buf, 0, buf.length, session.port, argv.oschost) ;
 }) ;
 
 
@@ -27,10 +29,11 @@ proxy.listen = function(port) {
 }
 
 proxy.listen(argv.proxyport) ;
+
 /*
 function sendStuff() {
   var buf = osc.toBuffer({
-    address: argv.oscname ,
+    address: session.oscAddress ,
     args: [{type: "integer", value: Math.floor(Math.random() * 127)}]
   }) ;
 
