@@ -36,7 +36,7 @@ var master = function() {
         inputData = osc.fromBuffer(data) ;
         if (inputData.elements === undefined) {
           syslog.log(syslog.LOG_ERR, "this is not a bundle") ;
-          throw "not a bundle" ;
+          throw new Error("not a bundle") ;
         }
       } catch (err) {
         syslog.log(syslog.LOG_ERR, "recieved malformated osc input from backend " + c.remoteAddress) ;
