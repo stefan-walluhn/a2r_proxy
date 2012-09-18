@@ -6,6 +6,8 @@ var net = require('net') ;
 
 var syslog = require('../lib/syslog') ;
 var config = require('../lib/configloader').load('proxy.config') ;
+var sfactory = require('../lib/session') ;
+var sessions = require('../lib/sessions') ;
 var launcher = require('../lib/collector_launcher') ;
 var notifier = require('../lib/index_notifier') ;
 
@@ -17,19 +19,22 @@ var master = function() {
     c.on('data', function(data) {
 
       function startCollectors(session) {
-        
-        for (var i=0; i<session.sensors.length; i++) {
-          var port = launcher.startCollector(session, session.sensors[i]) ;
-          session.sensors[i]['port'] = port ;
+
+        for (var i=0; i<session.data.sensors.length; i++) {
+          var port = launcher.startCollector(session, session.data.sensors[i]) ;
+          session.data.sensors[i]['port'] = port ;
         }
 
         notifier.notifyIndex(session) ;
+        sessions.register(session) ;
       }
 
       var inputData = "" ;
-      var session = {} ;
-      session['sensors'] = [] ;
-      session['backend_host'] = c.remoteAddress ;
+      var session = sessions.find(c.remoteAddress, c.remotePort) ;
+      if (session === undefined) session = sfactory.createSession(c) ;
+      session.data = {} ;
+      session.data['sensors'] = [] ;
+      session.backend['host'] = c.remoteAddress ;
 
       // first parse osc to hash
       try {
@@ -56,7 +61,11 @@ var master = function() {
           if (element.args.length > 0) {
             var key = element.address.substring(element.address.lastIndexOf("/")+1, element.address.length).toLowerCase() ;
             var val = element.args[0].value ;
-            session[key] = val ;
+            if (key == "port") {
+              session.backend[key] = val ;
+            } else {
+              session.data[key] = val ;
+            }
 
             syslog.log(syslog.LOG_DEBUG, "Metadata:\t" + key + " : " + val) ;
           }
@@ -81,24 +90,22 @@ var master = function() {
           }
 
           if (sensor['name'] !== undefined) {
-            session['sensors'].push(sensor) ;
+            session.data['sensors'].push(sensor) ;
           }
         }
       }
     
-      if (session['name'] === undefined) {
-        syslog.log(syslog.LOG_ERR, "Announce from " + session['backend_host'] + " missed name") ;
+      if (session.data['name'] === undefined) {
+        syslog.log(syslog.LOG_ERR, "Announce from " + session.backend['host'] + " missed name") ;
         return ;
       }
 
-      if (session['port'] === undefined) {
-        syslog.log(syslog.LOG_ERR, "Announce from " + session['backend_host'] + " missed port") ;
+      if (session.backend['port'] === undefined) {
+        syslog.log(syslog.LOG_ERR, "Announce from " + session.backend['host'] + " missed port") ;
         return ;
       }
     
-      if (session['title'] === undefined) session['title'] = session['name'] ;
-
-      session['backend_port'] = session['port'] ;
+      if (session.data['title'] === undefined) session.data['title'] = session.data['name'] ;
 
       // go further with starting necessary collector processes
       startCollectors(session) ;
