@@ -78,7 +78,7 @@ var master = function() {
           element = inputData.elements[i].elements[j] ;
 
             // This is no osc for us
-            if (element.address.search(osc_address) == -1) continue ;
+            if ((typeof(element.prototype == undefined)) || (element.address.search(osc_address)) == -1) continue ;
 
             if (element.args.length > 0) {
               var key = element.address.substring(element.address.lastIndexOf("/")+1, element.address.length).toLowerCase() ;
