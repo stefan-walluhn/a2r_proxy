@@ -20,8 +20,10 @@ var master = function() {
 
       function startCollectors(session) {
 
-        var port = launcher.startCollector(session) ;
-        session.data['port'] = port ;
+        if (session.data['port'] === undefined) {
+          var port = launcher.startCollector(session) ;
+          session.data['port'] = port ;
+        }
 
         notifier.notifyIndex(session) ;
         sessions.register(session) ;
