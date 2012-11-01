@@ -20,10 +20,8 @@ var master = function() {
 
       function startCollectors(session) {
 
-        for (var i=0; i<session.data.sensors.length; i++) {
-          var port = launcher.startCollector(session, session.data.sensors[i]) ;
-          session.data.sensors[i]['port'] = port ;
-        }
+        var port = launcher.startCollector(session) ;
+        session.data['port'] = port ;
 
         notifier.notifyIndex(session) ;
         sessions.register(session) ;
@@ -75,10 +73,10 @@ var master = function() {
         else {
           var sensor = {} ;
           for (j=0; j<inputData.elements[i].elements.length; j++) {
-          element = inputData.elements[i].elements[j] ;
+            element = inputData.elements[i].elements[j] ;
 
             // This is no osc for us
-            if ((typeof(element.prototype == undefined)) || (element.address.search(osc_address)) == -1) continue ;
+            if ((element.oscType != 'message') || (element.address.search(osc_address)) == -1) continue ;
 
             if (element.args.length > 0) {
               var key = element.address.substring(element.address.lastIndexOf("/")+1, element.address.length).toLowerCase() ;
@@ -89,7 +87,7 @@ var master = function() {
             }
           }
 
-          if (sensor['name'] !== undefined) {
+          if ((sensor['name'] !== undefined) && (sensor['type'] !== undefined)) {
             session.data['sensors'].push(sensor) ;
           }
         }
@@ -106,6 +104,8 @@ var master = function() {
       }
     
       if (session.data['title'] === undefined) session.data['title'] = session.data['name'] ;
+
+      if (session.data['statistic'] === undefined) session.data['statistic'] = "passthrue" ;
 
       // go further with starting necessary collector processes
       startCollectors(session) ;
