@@ -30,8 +30,26 @@ var syslog = require('./lib/syslog') ;
 if (argv.v) syslog.setConsoleLog(true) ;
 
 var config = require('./lib/configloader').load('proxy.config') ;
-
+var sessions = require('./lib/sessions') ;
 var server = require('./run/master') ;
 server.listen(config['notify_server_port']) ;
 
 syslog.log(syslog.LOG_INFO, 'master a2r_proxy started on port ' + config['notify_server_port']) ;
+
+process.on('SIGINT', function() {
+  shutdown() ;
+}) ;
+
+process.on('SIGTERM', function() {
+  shutdown() ;
+}) ;
+
+process.on('SIGKILL', function() {
+  shutdown() ;
+}) ;
+
+function shutdown() {
+  //ToDO: Shutdown collectors, notify index as in run/master -> c.on('close')
+  syslog.log(syslog.LOG_INFO, 'master a2r_proxy stopped') ;
+  process.exit() ;
+}

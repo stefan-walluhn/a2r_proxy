@@ -14,6 +14,10 @@ var notifier = require('../lib/index_notifier') ;
 var master = function() {
 
   var server = net.createServer(function(c) {
+
+    var remoteAddress = c.remoteAddress ;
+    var remotePort = c.remotePort ;
+
     syslog.log(syslog.LOG_INFO, "backend " + c.remoteAddress + " connected to master a2r_proxy") ;
 
     c.on('data', function(data) {
@@ -25,7 +29,7 @@ var master = function() {
           session.data['port'] = port ;
         }
 
-        notifier.notifyIndex(session) ;
+        notifier.notifyUpdate(session) ;
         sessions.register(session) ;
       }
 
@@ -90,9 +94,16 @@ var master = function() {
 
     }.bind(this)) ;
    
-    c.on('close', function(data) {
-      syslog.log(syslog.LOG_INFO, "backend " + c.remoteAddress + " closed connection") ;
-    }) ;
+    c.on('close', function() {
+      syslog.log(syslog.LOG_INFO, "backend " + remoteAddress + " closed connection") ;
+      var session = sessions.find(remoteAddress, remotePort) ;
+      if (session === undefined) return ;
+
+      notifier.notifyShutdown(session) ;
+      launcher.stopCollector(session) ;
+      sessions.unregister(remoteAddress, remotePort) ;
+
+    }.bind(this)) ;
   }) ;
 
   return server ;

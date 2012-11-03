@@ -44,6 +44,11 @@ udp_res.on("message", function(msg, rinfo) {
     }
 }) ;
 
+// ToDo: This doen't work at all
+udp_res.on("close", function() {
+  console.log("Close proxy listened on port" + argv.backendport) ;
+}) ;
+
 
 proxy.listen = function(port) {
   console.log("New proxy listen on port: " + port) ;
@@ -52,12 +57,3 @@ proxy.listen = function(port) {
 
 proxy.listen(argv.proxyport) ;
 
-/*
-function sendStuff() {
-  var buf = osc.toBuffer({
-    address: session.oscAddress ,
-    args: [{type: "integer", value: Math.floor(Math.random() * 127)}]
-  }) ;
-
-
-setInterval(sendStuff, 2000) ;*/
