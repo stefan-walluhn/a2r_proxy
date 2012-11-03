@@ -20,12 +20,24 @@ udp_res.on("message", function(msg, rinfo) {
     var type = msg.readUInt8(i) ;
     var address = session.oscAddress ;
 
-    if (type == 129) address += "/X" ;
-    if (type == 130) address += "/Y" ;
+    if (type == 129) address += "/A" ;
+    if (type == 130) address += "/B" ;
+    if (type == 131) address += "/C" ;
+    if (type == 132) address += "/D" ;
+    if (type == 133) address += "/E" ;
+    if (type == 134) address += "/F" ;
+    if (type == 144) address += "/ACCEL_X" ;
+    if (type == 145) address += "/ACCEL_Y" ;
+    if (type == 146) address += "/ACCEL_Z" ;
+    if (type == 160) address += "/GYRO_X" ;
+    if (type == 161) address += "/GYRO_Y" ;
+    if (type == 162) address += "/GYRO_Z" ;
+    if (type == 176) address += "/TEMP" ;
+    if (type == 178) address += "/LIGHT" ;
 
     var buf = osc.toBuffer({
       address: address ,
-      args: [{type: "integer", value: msg.readUInt16LE(i+1)}]
+      args: [{type: "integer", value: msg.readInt16LE(i+1)}]
     }) ;
 
     udp_send.send(buf, 0, buf.length, session.port, session.host) ;
