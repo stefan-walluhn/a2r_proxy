@@ -33,7 +33,6 @@ var master = function() {
       var session = sessions.find(c.remoteAddress, c.remotePort) ;
       if (session === undefined) session = sfactory.createSession(c) ;
       session.data = {} ;
-      session.data['sensors'] = [] ;
       session.backend['host'] = c.remoteAddress ;
 
       // first parse osc to hash
@@ -70,29 +69,6 @@ var master = function() {
             syslog.log(syslog.LOG_DEBUG, "Metadata:\t" + key + " : " + val) ;
           }
         } 
-        
-        // **** This is a bundle and therefor should be a sensor ****
-        else {
-          var sensor = {} ;
-          for (j=0; j<inputData.elements[i].elements.length; j++) {
-            element = inputData.elements[i].elements[j] ;
-
-            // This is no osc for us
-            if ((element.oscType != 'message') || (element.address.search(osc_address)) == -1) continue ;
-
-            if (element.args.length > 0) {
-              var key = element.address.substring(element.address.lastIndexOf("/")+1, element.address.length).toLowerCase() ;
-              var val = element.args[0].value ;
-              sensor[key] = val ;
-
-              syslog.log(syslog.LOG_DEBUG, "Sensordata:\t" + key + " : " + val) ;
-            }
-          }
-
-          if ((sensor['name'] !== undefined) && (sensor['type'] !== undefined)) {
-            session.data['sensors'].push(sensor) ;
-          }
-        }
       }
     
       if (session.data['name'] === undefined) {
